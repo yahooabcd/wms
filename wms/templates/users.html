@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}用户管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">用户管理</h4>
+  {% if current_user.has_perm('user:create') %}
+  <a href="{{ url_for('user.create') }}" class="btn btn-primary btn-sm">+ 新建用户</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>ID</th><th>用户名</th><th>姓名</th><th>邮箱</th><th>电话</th><th>角色</th><th>状态</th><th>创建时间</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{{ u['id'] }}</td>
+          <td>{{ u['username'] }}</td>
+          <td>{{ u['real_name'] }}</td>
+          <td>{{ u['email'] or '-' }}</td>
+          <td>{{ u['phone'] or '-' }}</td>
+          <td>{{ u['role_names'] or '未分配' }}</td>
+          <td>
+            {% if u['is_active'] %}<span class="badge bg-success">启用</span>
+            {% else %}<span class="badge bg-secondary">禁用</span>{% endif %}
+          </td>
+          <td class="small">{{ u['created_at'] }}</td>
+          <td class="text-nowrap">
+            {% if current_user.has_perm('user:edit') %}
+            <a href="{{ url_for('user.edit', uid=u['id']) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {% endif %}
+            {% if current_user.has_perm('user:delete') %}
+            <form method="post" action="{{ url_for('user.delete', uid=u['id']) }}" class="d-inline" onsubmit="return confirmDelete('确认删除用户 {{ u['username'] }}？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

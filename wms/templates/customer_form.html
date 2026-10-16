@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ '编辑客户' if customer else '新建客户' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ '编辑客户' if customer else '新建客户' }}</h4>
+
+<div class="card" style="max-width: 640px;">
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">名称 <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" value="{{ customer['name'] if customer else '' }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">联系人</label>
+          <input type="text" name="contact" class="form-control" value="{{ customer['contact'] if customer else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">电话</label>
+          <input type="text" name="phone" class="form-control" value="{{ customer['phone'] if customer else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">地址</label>
+          <input type="text" name="address" class="form-control" value="{{ customer['address'] if customer else '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label">备注</label>
+          <textarea name="remark" class="form-control" rows="2">{{ customer['remark'] if customer else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('customer.index') }}" class="btn btn-outline-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

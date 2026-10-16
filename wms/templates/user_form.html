@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ '编辑用户' if user else '新建用户' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ '编辑用户' if user else '新建用户' }}</h4>
+
+<div class="card" style="max-width: 640px;">
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">用户名 <span class="text-danger">*</span></label>
+          <input type="text" name="username" class="form-control" value="{{ user['username'] if user else '' }}"
+                 {{ 'disabled' if user }} required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">密码 {% if user %}<span class="text-muted small">（留空则不修改）</span>{% else %}<span class="text-danger">*</span>{% endif %}</label>
+          <input type="password" name="password" class="form-control" {{ 'required' if not user }} autocomplete="new-password">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">姓名</label>
+          <input type="text" name="real_name" class="form-control" value="{{ user['real_name'] if user else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">电话</label>
+          <input type="text" name="phone" class="form-control" value="{{ user['phone'] if user else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label">邮箱</label>
+          <input type="email" name="email" class="form-control" value="{{ user['email'] if user else '' }}">
+        </div>
+        <div class="col-md-12">
+          <label class="form-label d-block">分配角色</label>
+          {% for r in roles %}
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" name="role_ids" value="{{ r['id'] }}" id="role{{ r['id'] }}"
+                   {% if r['id'] in user_role_ids %}checked{% endif %}>
+            <label class="form-check-label" for="role{{ r['id'] }}">{{ r['name'] }}</label>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="col-md-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="is_active" id="is_active"
+                   {% if not user or user['is_active'] %}checked{% endif %}>
+            <label class="form-check-label" for="is_active">启用该账号</label>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('user.index') }}" class="btn btn-outline-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

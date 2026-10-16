@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}供应商{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">供应商</h4>
+  {% if current_user.has_perm('supplier:create') %}
+  <a href="{{ url_for('supplier.create') }}" class="btn btn-primary btn-sm">+ 新建供应商</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body pb-0">
+    <form method="get" class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" name="kw" class="form-control form-control-sm" placeholder="名称 / 联系人" value="{{ kw }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-outline-primary">搜索</button>
+        <a href="{{ url_for('supplier.index') }}" class="btn btn-sm btn-outline-secondary">重置</a>
+      </div>
+    </form>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>ID</th><th>名称</th><th>联系人</th><th>电话</th><th>地址</th><th>备注</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        {% for s in suppliers %}
+        <tr>
+          <td>{{ s['id'] }}</td>
+          <td>{{ s['name'] }}</td>
+          <td>{{ s['contact'] or '-' }}</td>
+          <td>{{ s['phone'] or '-' }}</td>
+          <td>{{ s['address'] or '-' }}</td>
+          <td class="text-muted">{{ s['remark'] or '-' }}</td>
+          <td class="text-nowrap">
+            {% if current_user.has_perm('supplier:edit') %}
+            <a href="{{ url_for('supplier.edit', sid=s['id']) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {% endif %}
+            {% if current_user.has_perm('supplier:delete') %}
+            <form method="post" action="{{ url_for('supplier.delete', sid=s['id']) }}" class="d-inline" onsubmit="return confirmDelete('确认删除供应商 {{ s['name'] }}？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-muted py-3">暂无供应商</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

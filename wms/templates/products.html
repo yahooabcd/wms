@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %}商品管理{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">商品管理</h4>
+  {% if current_user.has_perm('product:create') %}
+  <a href="{{ url_for('product.create') }}" class="btn btn-primary btn-sm">+ 新建商品</a>
+  {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-body pb-0">
+    <form method="get" class="row g-2 mb-3">
+      <div class="col-md-4">
+        <input type="text" name="kw" class="form-control form-control-sm" placeholder="商品名称 / SKU" value="{{ kw }}">
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-outline-primary">搜索</button>
+        <a href="{{ url_for('product.index') }}" class="btn btn-sm btn-outline-secondary">重置</a>
+      </div>
+    </form>
+  </div>
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>SKU</th><th>名称</th><th>分类</th><th>规格</th><th>单位</th><th class="text-end">单价</th><th class="text-end">预警下限</th><th class="text-end">预警上限</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        {% for p in products %}
+        <tr>
+          <td>{{ p['sku'] }}</td>
+          <td>{{ p['name'] }}</td>
+          <td>{{ p['category_name'] or '-' }}</td>
+          <td>{{ p['spec'] or '-' }}</td>
+          <td>{{ p['unit'] }}</td>
+          <td class="text-end">{{ '%.2f'|format(p['price']) }}</td>
+          <td class="text-end">{{ p['warning_low'] }}</td>
+          <td class="text-end">{{ p['warning_high'] }}</td>
+          <td class="text-nowrap">
+            {% if current_user.has_perm('product:edit') %}
+            <a href="{{ url_for('product.edit', pid=p['id']) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {% endif %}
+            {% if current_user.has_perm('product:delete') %}
+            <form method="post" action="{{ url_for('product.delete', pid=p['id']) }}" class="d-inline" onsubmit="return confirmDelete('确认删除商品 {{ p['name'] }}？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center text-muted py-3">暂无商品</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">商品分类</div>
+  <div class="card-body">
+    {% if current_user.has_perm('product:create') %}
+    <form method="post" action="{{ url_for('product.add_category') }}" class="row g-2 mb-3">
+      <div class="col-md-3">
+        <input type="text" name="name" class="form-control form-control-sm" placeholder="分类名称" required>
+      </div>
+      <div class="col-md-3">
+        <select name="parent_id" class="form-select form-select-sm">
+          <option value="">（顶级分类）</option>
+          {% for c in categories %}
+          <option value="{{ c['id'] }}">{{ c['name'] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button type="submit" class="btn btn-sm btn-primary">添加分类</button>
+      </div>
+    </form>
+    {% endif %}
+    <table class="table table-sm mb-0" style="max-width: 640px;">
+      <thead class="table-light"><tr><th>ID</th><th>分类名称</th><th>上级分类</th><th>操作</th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td>{{ c['id'] }}</td>
+          <td>{{ c['name'] }}</td>
+          <td>{{ c['parent_name'] or '-' }}</td>
+          <td>
+            {% if current_user.has_perm('product:delete') %}
+            <form method="post" action="{{ url_for('product.delete_category', cid=c['id']) }}" class="d-inline" onsubmit="return confirmDelete('确认删除分类 {{ c['name'] }}？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-muted py-2">暂无分类</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

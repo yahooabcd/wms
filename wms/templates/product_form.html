@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}{{ '编辑商品' if product else '新建商品' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ '编辑商品' if product else '新建商品' }}</h4>
+
+<div class="card" style="max-width: 640px;">
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">SKU <span class="text-danger">*</span></label>
+          <input type="text" name="sku" class="form-control" value="{{ product['sku'] if product else '' }}"
+                 {{ 'disabled' if product }} required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">商品名称 <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" value="{{ product['name'] if product else '' }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">分类</label>
+          <select name="category_id" class="form-select">
+            <option value="">（未分类）</option>
+            {% for c in categories %}
+            <option value="{{ c['id'] }}" {% if product and product['category_id'] == c['id'] %}selected{% endif %}>{{ c['name'] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">规格</label>
+          <input type="text" name="spec" class="form-control" value="{{ product['spec'] if product else '' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">单位</label>
+          <input type="text" name="unit" class="form-control" value="{{ product['unit'] if product else '个' }}">
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">单价（成本/参考价）</label>
+          <input type="number" name="price" class="form-control" step="0.01" min="0" value="{{ product['price'] if product else '0' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">预警下限</label>
+          <input type="number" name="warning_low" class="form-control" min="0" value="{{ product['warning_low'] if product else '0' }}">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">预警上限</label>
+          <input type="number" name="warning_high" class="form-control" min="0" value="{{ product['warning_high'] if product else '999999' }}">
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('product.index') }}" class="btn btn-outline-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

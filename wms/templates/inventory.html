@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}库存查询{% endblock %}
+{% block content %}
+<h4 class="mb-3">库存查询</h4>
+
+<form method="get" class="card mb-3">
+  <div class="card-body row g-2 align-items-end">
+    <div class="col-md-3">
+      <label class="form-label">仓库</label>
+      <select name="warehouse_id" class="form-select">
+        <option value="">全部仓库</option>
+        {% for w in warehouses %}
+        <option value="{{ w.id }}" {{ 'selected' if wid|string == w.id|string }}>{{ w.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">关键字</label>
+      <input type="text" name="kw" class="form-control" placeholder="商品名称 / SKU" value="{{ kw }}">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">预警状态</label>
+      <select name="warn" class="form-select">
+        <option value="">全部</option>
+        <option value="low" {{ 'selected' if warn == 'low' }}>低库存预警</option>
+        <option value="high" {{ 'selected' if warn == 'high' }}>高库存预警</option>
+      </select>
+    </div>
+    <div class="col-md-3">
+      <button class="btn btn-primary">查询</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('inventory.index') }}">重置</a>
+      <a class="btn btn-outline-success" href="{{ url_for('inventory.export') }}?{{ request.query_string.decode() }}">导出 CSV</a>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>仓库</th><th>SKU</th><th>商品</th><th>规格</th><th>单位</th>
+          <th class="text-end">库存数量</th><th class="text-end">预警区间</th>
+          <th class="text-end">单价</th><th class="text-end">库存价值</th><th>状态</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td>{{ r.warehouse_name }}</td>
+          <td>{{ r.sku }}</td>
+          <td>{{ r.product_name }}</td>
+          <td>{{ r.spec }}</td>
+          <td>{{ r.unit }}</td>
+          <td class="text-end fw-bold">{{ r.quantity }}</td>
+          <td class="text-end text-muted">{{ r.warning_low }} ~ {{ r.warning_high }}</td>
+          <td class="text-end">¥{{ '%.2f'|format(r.price) }}</td>
+          <td class="text-end">¥{{ '%.2f'|format(r.total_value) }}</td>
+          <td>
+            {% if r.quantity < r.warning_low %}<span class="badge text-bg-danger">低库存</span>
+            {% elif r.quantity > r.warning_high %}<span class="badge text-bg-warning">高库存</span>
+            {% else %}<span class="badge text-bg-success">正常</span>{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="text-center text-muted py-4">暂无库存记录</td></tr>
+        {% endfor %}
+      </tbody>
+      {% if rows %}
+      <tfoot>
+        <tr>
+          <td colspan="8" class="text-end fw-bold">库存总价值</td>
+          <td class="text-end fw-bold">¥{{ '%.2f'|format(total_value) }}</td>
+          <td></td>
+        </tr>
+      </tfoot>
+      {% endif %}
+    </table>
+  </div>
+</div>
+{% endblock %}

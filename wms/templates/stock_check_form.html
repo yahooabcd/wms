@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if order else '新建' }}盘点单{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ '编辑' if order else '新建' }}盘点单{% if order %}（{{ order.code }}）{% endif %}</h4>
+
+<form method="post"
+      action="{{ url_for('stock_check.edit', cid=order.id) if order else url_for('stock_check.create') }}"
+      onsubmit="return validateForm()">
+  <div class="card mb-3">
+    <div class="card-body row g-3 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label">盘点仓库 <span class="text-danger">*</span></label>
+        {% if order %}
+        <input type="text" class="form-control" value="{{ order.warehouse_name }}" disabled>
+        {% else %}
+        <select id="warehouseSel" class="form-select" required>
+          <option value="">请选择</option>
+          {% for w in warehouses %}
+          <option value="{{ w.id }}">{{ w.name }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="warehouse_id" id="warehouseId">
+        {% endif %}
+      </div>
+      {% if not order %}
+      <div class="col-md-3">
+        <button type="button" class="btn btn-outline-primary" onclick="loadItems()">加载盘点商品</button>
+      </div>
+      {% endif %}
+      <div class="col-md-6">
+        <label class="form-label">备注</label>
+        <input type="text" name="remark" class="form-control" value="{{ order.remark if order else '' }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <span>盘点明细</span>
+      <span class="text-muted small">差异 = 实盘数量 − 账面数量</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0" id="itemsTable">
+        <thead class="table-light">
+          <tr>
+            <th>SKU</th><th>商品</th><th>规格</th><th>单位</th>
+            <th class="text-end">账面数量</th><th style="width:14%">实盘数量</th><th class="text-end">差异</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mb-4">
+    <button type="submit" class="btn btn-primary">保存</button>
+    <a class="btn btn-outline-secondary" href="{{ url_for('stock_check.index') }}">取消</a>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const PREFILL = {{ items | tojson }};
+const API_URL = "{{ url_for('stock_check.api_items') }}";
+
+function renderRow(it) {
+  const tbody = document.querySelector('#itemsTable tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${it.sku || ''}<input type="hidden" name="product_id" value="${it.product_id}"></td>
+    <td>${it.name || it.product_name || ''}</td>
+    <td>${it.spec || ''}</td>
+    <td>${it.unit || ''}</td>
+    <td class="text-end">${it.system_qty}<input type="hidden" name="system_qty" value="${it.system_qty}"></td>
+    <td><input type="number" name="actual_qty" class="form-control form-control-sm text-end" step="1" value="${it.actual_qty !== undefined ? it.actual_qty : it.system_qty}" required oninput="recalcRow(this)"></td>
+    <td class="text-end diff">0</td>`;
+  tbody.appendChild(tr);
+  recalcRow(tr.querySelector('input[name="actual_qty"]'));
+}
+
+function recalcRow(input) {
+  const tr = input.closest('tr');
+  const sys = parseInt(tr.querySelector('input[name="system_qty"]').value) || 0;
+  const act = parseInt(input.value) || 0;
+  const diff = act - sys;
+  const cell = tr.querySelector('.diff');
+  cell.textContent = (diff > 0 ? '+' : '') + diff;
+  cell.className = 'text-end diff ' + (diff > 0 ? 'text-success' : (diff < 0 ? 'text-danger' : ''));
+}
+
+async function loadItems() {
+  const sel = document.getElementById('warehouseSel');
+  const wid = sel.value;
+  if (!wid) {
+    alert('请先选择盘点仓库');
+    return;
+  }
+  document.getElementById('warehouseId').value = wid;
+  const tbody = document.querySelector('#itemsTable tbody');
+  tbody.innerHTML = '';
+  try {
+    const resp = await fetch(API_URL + '?warehouse_id=' + wid);
+    const rows = await resp.json();
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">该仓库暂无库存记录</td></tr>';
+      return;
+    }
+    rows.forEach(renderRow);
+    sel.disabled = true;
+  } catch (e) {
+    alert('加载盘点商品失败，请重试');
+  }
+}
+
+function validateForm() {
+  {% if not order %}
+  if (!document.getElementById('warehouseId').value) {
+    alert('请选择仓库并点击「加载盘点商品」');
+    return false;
+  }
+  {% endif %}
+  if (!document.querySelectorAll('#itemsTable tbody input[name="product_id"]').length) {
+    alert('盘点明细不能为空');
+    return false;
+  }
+  return true;
+}
+
+if (PREFILL.length) PREFILL.forEach(renderRow);
+</script>
+{% endblock %}

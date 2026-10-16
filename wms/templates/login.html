@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>登录 · WMS 仓库管理系统</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-card { width: 100%; max-width: 400px; }
+  </style>
+</head>
+<body>
+<div class="login-card">
+  <div class="card shadow-sm">
+    <div class="card-body p-4">
+      <h4 class="text-center mb-1">WMS 仓库管理系统</h4>
+      <p class="text-center text-muted mb-4">请登录后使用</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="post">
+        <div class="mb-3">
+          <label class="form-label">用户名</label>
+          <input type="text" name="username" class="form-control" required autofocus>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">密码</label>
+          <input type="password" name="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">登 录</button>
+      </form>
+      <p class="text-center text-muted small mt-3 mb-0">默认账号：admin / admin123</p>
+    </div>
+  </div>
+</div>
+</body>
+</html>

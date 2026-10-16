@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}报表中心{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">报表中心</h4>
+  <a class="btn btn-outline-success btn-sm" href="{{ url_for('report.export') }}?{{ request.query_string.decode() }}">导出当前报表 CSV</a>
+</div>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'flow' }}" href="{{ url_for('report.index', tab='flow') }}">出入库流水</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'value' }}" href="{{ url_for('report.index', tab='value') }}">库存价值</a></li>
+  <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'check' }}" href="{{ url_for('report.index', tab='check') }}">盘点盈亏</a></li>
+</ul>
+
+{% if tab == 'flow' %}
+<form method="get" class="card mb-3">
+  <input type="hidden" name="tab" value="flow">
+  <div class="card-body row g-2 align-items-end">
+    <div class="col-md-2">
+      <label class="form-label">开始日期</label>
+      <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">结束日期</label>
+      <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">仓库</label>
+      <select name="warehouse_id" class="form-select">
+        <option value="">全部</option>
+        {% for w in warehouses %}
+        <option value="{{ w.id }}" {{ 'selected' if warehouse_id|string == w.id|string }}>{{ w.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">类型</label>
+      <select name="biz_type" class="form-select">
+        <option value="">全部</option>
+        {% for k, v in biz_types.items() %}
+        <option value="{{ k }}" {{ 'selected' if biz_type == k }}>{{ v }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label">关键字</label>
+      <input type="text" name="kw" class="form-control" placeholder="商品名称 / SKU" value="{{ kw }}">
+    </div>
+    <div class="col-md-2">
+      <button class="btn btn-primary">查询</button>
+      <a class="btn btn-outline-secondary" href="{{ url_for('report.index', tab='flow') }}">重置</a>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>时间</th><th>类型</th><th>单号</th><th>仓库</th><th>SKU</th><th>商品</th>
+          <th class="text-end">变动数量</th><th class="text-end">结存</th><th>经办人</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in logs %}
+        <tr>
+          <td>{{ l.created_at }}</td>
+          <td><span class="badge text-bg-{{ 'success' if l.biz_type == 'in' else ('danger' if l.biz_type == 'out' else 'info') }}">{{ biz_types.get(l.biz_type, l.biz_type) }}</span></td>
+          <td>{{ l.biz_type | upper }}{{ l.biz_id }}</td>
+          <td>{{ l.warehouse_name }}</td>
+          <td>{{ l.sku }}</td>
+          <td>{{ l.product_name }}</td>
+          <td class="text-end fw-bold {{ 'text-success' if l.quantity_change > 0 else 'text-danger' }}">
+            {{ ('+' ~ l.quantity_change) if l.quantity_change > 0 else l.quantity_change }} {{ l.unit }}
+          </td>
+          <td class="text-end">{{ l.balance_after }}</td>
+          <td>{{ l.operator_name or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="text-center text-muted py-4">暂无流水记录</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elif tab == 'value' %}
+{% if value_summary %}
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="text-muted small">库存总数量</div>
+        <div class="fs-4 fw-bold">{{ value_summary.total_qty }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="text-muted small">库存总价值</div>
+        <div class="fs-4 fw-bold">¥{{ '%.2f'|format(value_summary.total_value) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>仓库</th><th>SKU</th><th>商品</th><th>规格</th><th>单位</th>
+          <th class="text-end">数量</th><th class="text-end">单价</th><th class="text-end">价值</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in value_rows %}
+        <tr>
+          <td>{{ r.warehouse_name }}</td>
+          <td>{{ r.sku }}</td>
+          <td>{{ r.product_name }}</td>
+          <td>{{ r.spec }}</td>
+          <td>{{ r.unit }}</td>
+          <td class="text-end">{{ r.quantity }}</td>
+          <td class="text-end">¥{{ '%.2f'|format(r.price) }}</td>
+          <td class="text-end fw-bold">¥{{ '%.2f'|format(r.total_value) }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center text-muted py-4">暂无库存记录</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% elif tab == 'check' %}
+{% if check_summary %}
+<div class="row g-3 mb-3">
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="text-muted small">累计盘盈价值</div>
+        <div class="fs-4 fw-bold text-success">¥{{ '%.2f'|format(check_summary.profit) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card stat-card">
+      <div class="card-body">
+        <div class="text-muted small">累计盘亏价值</div>
+        <div class="fs-4 fw-bold text-danger">¥{{ '%.2f'|format(check_summary.loss) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>盘点单号</th><th>时间</th><th>仓库</th><th>SKU</th><th>商品</th>
+          <th class="text-end">账面</th><th class="text-end">实盘</th>
+          <th class="text-end">差异</th><th class="text-end">差异价值</th><th>经办人</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in check_rows %}
+        <tr>
+          <td>{{ r.code }}</td>
+          <td>{{ r.created_at }}</td>
+          <td>{{ r.warehouse_name }}</td>
+          <td>{{ r.sku }}</td>
+          <td>{{ r.product_name }}</td>
+          <td class="text-end">{{ r.system_qty }}</td>
+          <td class="text-end">{{ r.actual_qty }}</td>
+          <td class="text-end fw-bold {{ 'text-success' if r.diff > 0 else 'text-danger' }}">
+            {{ ('+' ~ r.diff) if r.diff > 0 else r.diff }}
+          </td>
+          <td class="text-end">¥{{ '%.2f'|format(r.diff_value) }}</td>
+          <td>{{ r.operator_name or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="text-center text-muted py-4">暂无盘点盈亏记录</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

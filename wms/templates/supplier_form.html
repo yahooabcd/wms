@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ '编辑供应商' if supplier else '新建供应商' }}{% endblock %}
+{% block content %}
+<h4 class="mb-3">{{ '编辑供应商' if supplier else '新建供应商' }}</h4>
+
+<div class="card" style="max-width: 640px;">
+  <div class="card-body">
+    <form method="post">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">名称 <span class="text-danger">*</span></label>
+          <input type="text" name="name" class="form-control" value="{{ supplier['name'] if supplier else '' }}" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">联系人</label>
+          <input type="text" name="contact" class="form-control" value="{{ supplier['contact'] if supplier else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">电话</label>
+          <input type="text" name="phone" class="form-control" value="{{ supplier['phone'] if supplier else '' }}">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">地址</label>
+          <input type="text" name="address" class="form-control" value="{{ supplier['address'] if supplier else '' }}">
+        </div>
+        <div class="col-12">
+          <label class="form-label">备注</label>
+          <textarea name="remark" class="form-control" rows="2">{{ supplier['remark'] if supplier else '' }}</textarea>
+        </div>
+      </div>
+      <div class="mt-4">
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="{{ url_for('supplier.index') }}" class="btn btn-outline-secondary">返回</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

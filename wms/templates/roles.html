@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}角色权限{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">角色权限</h4>
+  {% if current_user.has_perm('role:create') %}
+  <a href="{{ url_for('role.create') }}" class="btn btn-primary btn-sm">+ 新建角色</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr><th>ID</th><th>角色名称</th><th>描述</th><th class="text-end">权限数</th><th class="text-end">用户数</th><th>创建时间</th><th>操作</th></tr>
+      </thead>
+      <tbody>
+        {% for r in roles %}
+        <tr>
+          <td>{{ r['id'] }}</td>
+          <td>
+            {{ r['name'] }}
+            {% if r['id'] == admin_role_id %}<span class="badge bg-dark">内置</span>{% endif %}
+          </td>
+          <td class="text-muted">{{ r['description'] }}</td>
+          <td class="text-end">{{ r['perm_count'] }}</td>
+          <td class="text-end">{{ r['user_count'] }}</td>
+          <td class="small">{{ r['created_at'] }}</td>
+          <td class="text-nowrap">
+            {% if current_user.has_perm('role:edit') %}
+            <a href="{{ url_for('role.edit', rid=r['id']) }}" class="btn btn-sm btn-outline-primary">编辑</a>
+            {% endif %}
+            {% if current_user.has_perm('role:delete') and r['id'] != admin_role_id %}
+            <form method="post" action="{{ url_for('role.delete', rid=r['id']) }}" class="d-inline" onsubmit="return confirmDelete('确认删除角色 {{ r['name'] }}？')">
+              <button type="submit" class="btn btn-sm btn-outline-danger">删除</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

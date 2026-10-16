@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}盘点单详情{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">盘点单 {{ order.code }}</h4>
+  <div>
+    {% if order.status == 'pending' %}
+      {% if current_user.has_perm('stock_check:audit') %}
+      <form method="post" action="{{ url_for('stock_check.audit', cid=order.id) }}" class="d-inline"
+            onsubmit="return confirm('审核通过后将按差异调整库存，确认审核？')">
+        <button class="btn btn-success btn-sm">审核通过</button>
+      </form>
+      {% endif %}
+      {% if current_user.has_perm('stock_check:edit') %}
+      <a class="btn btn-outline-primary btn-sm" href="{{ url_for('stock_check.edit', cid=order.id) }}">编辑</a>
+      {% endif %}
+    {% endif %}
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('stock_check.index') }}">返回列表</a>
+  </div>
+</div>
+
+<div class="card mb-3">
+  <div class="card-body row g-2">
+    <div class="col-md-3"><span class="text-muted">状态：</span>
+      {% if order.status == 'pending' %}<span class="badge text-bg-warning">待审核</span>
+      {% else %}<span class="badge text-bg-success">已完成</span>{% endif %}
+    </div>
+    <div class="col-md-3"><span class="text-muted">仓库：</span>{{ order.warehouse_name }}</div>
+    <div class="col-md-3"><span class="text-muted">经办人：</span>{{ order.operator_name }}</div>
+    <div class="col-md-3"><span class="text-muted">创建时间：</span>{{ order.created_at }}</div>
+    <div class="col-md-12"><span class="text-muted">备注：</span>{{ order.remark or '-' }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>#</th><th>SKU</th><th>商品</th><th>规格</th><th>单位</th>
+          <th class="text-end">账面数量</th><th class="text-end">实盘数量</th><th class="text-end">差异</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ it.sku }}</td>
+          <td>{{ it.product_name }}</td>
+          <td>{{ it.spec }}</td>
+          <td>{{ it.unit }}</td>
+          <td class="text-end">{{ it.system_qty }}</td>
+          <td class="text-end">{{ it.actual_qty }}</td>
+          <td class="text-end fw-bold {{ 'text-success' if it.diff > 0 else ('text-danger' if it.diff < 0) }}">
+            {{ ('+' ~ it.diff) if it.diff > 0 else it.diff }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
